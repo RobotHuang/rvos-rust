@@ -1,3 +1,5 @@
+	.section .text.entry
+	
 	.equ MAXNUM_CPU, 8
 
 	.equ	STACK_SIZE, 8192

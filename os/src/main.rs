@@ -1,7 +1,5 @@
 #![no_std]
-
 #![no_main]
-
 #![feature(global_asm)]
 
 use core::panic::PanicInfo;
@@ -16,7 +14,16 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
+mod uart;
+
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {
+    uart::uart_init();
+    let s = b"Hello RVOS!\n";
+    let mut i = 0;
+    while i != 12 {
+        uart::uart_putc(s[i]);
+        i += 1;
+    }
     loop {}
 }

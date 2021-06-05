@@ -23,8 +23,7 @@ kernel:
 $(BIN_FILE): kernel
 	@$(OBJCOPY) $(KERNEL_FILE) -O binary $@
 
-%.o : %.c
-	${CC} ${CFLAGS} -c -o $@ $<
+
 
 # 通过 Rust 文件中的注释生成文档
 .PHONY: doc

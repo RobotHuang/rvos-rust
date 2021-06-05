@@ -1,5 +1,3 @@
-	.section .text.entry
-	
 	.equ MAXNUM_CPU, 8
 
 	.equ	STACK_SIZE, 8192
@@ -7,6 +5,7 @@
 	.global	_start
 
 	.text
+	.section .text.entry
 
 _start:
 	# park harts with id != 0
@@ -14,6 +13,15 @@ _start:
 	mv	tp, t0			# keep CPU's hartid in its tp for later usage.
 	bnez	t0, park		# if we're not on the hart 0
 					# we park the hart
+	# Set all bytes in the BSS section to zero.
+	la	a0, _bss_start
+	la	a1, _bss_end
+	bgeu	a0, a1, 2f
+1:
+	sw	zero, (a0)
+	addi	a0, a0, 4
+	bltu	a0, a1, 1b
+2:
 	# Setup stacks, the stack grows from bottom to top, so we put the
 	# stack pointer to the very end of the stack range.
 	slli	t0, t0, 10		# shift left the hart id by 1024

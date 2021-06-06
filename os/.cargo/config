@@ -4,5 +4,5 @@ target = "riscv32imac-unknown-none-elf"
 
 [target.riscv32imac-unknown-none-elf]
 rustflags = [
-    "-C", "link-arg=-Ttext=0x80000000",
+    "-C", "link-arg=-Tsrc/os.ld",
 ]

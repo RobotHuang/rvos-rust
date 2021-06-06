@@ -15,15 +15,12 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 mod uart;
+mod page;
 
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {
     uart::uart_init();
-    let s = b"Hello RVOS!\n";
-    let mut i = 0;
-    while i != 12 {
-        uart::uart_putc(s[i]);
-        i += 1;
-    }
+    uart::uart_puts(b"Hello RVOS!\n");
+    page::page_init();
     loop {}
 }

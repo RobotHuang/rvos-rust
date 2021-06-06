@@ -32,7 +32,7 @@ doc:
 
 .PHONY: asm
 asm:
-	@$(OBJDUMP) -d $(KERNEL_FILE) | less
+	@$(OBJDUMP) -S $(KERNEL_FILE) | less
 
 # 清理编译出的文件
 .PHONY: clean

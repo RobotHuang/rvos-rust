@@ -8,8 +8,9 @@ fn main() {
         .flag("-g")
         .flag("-Wall")
         .file("src/mem.S")
+        .file("src/printf.c")
+        .file("src/uart.c")
         .target("riscv32imac-unknown-none-elf")
-        .shared_flag(true)
         .pic(false)
         .compile("mem");
 }

@@ -1,4 +1,11 @@
 .section .rodata
+
+.global MEMORY_START
+MEMORY_START: .word _memory_start
+
+.global MEMORY_END
+MEMORY_END: .word _memory_end
+
 .global HEAP_START
 HEAP_START: .word _heap_start
 

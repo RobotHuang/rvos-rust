@@ -45,10 +45,10 @@ ENTRY( _start )
  * Finally LENGTH = 128M tells the linker that we have 128 megabyte of RAM.
  * The linker will double check this to make sure everything can fit.
  */
-/* MEMORY
+MEMORY
 {
 	ram   (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
-} */
+}
 
 /*
  * https://sourceware.org/binutils/docs/ld/SECTIONS.html
@@ -78,14 +78,14 @@ ENTRY( _start )
  * the CURRENT location ('.' = current memory location). This current memory
  * location moves as we add things.
  */
-BASE_ADDRESS = 0x80000000;
+/* BASE_ADDRESS = 0x80000000; */
 
 SECTIONS
 {
-	. = BASE_ADDRESS;
-	kernel_start = .;
+	/* . = BASE_ADDRESS; */
+	/* kernel_start = .; */
 
-    text_start = .;
+    /* text_start = .; */
 	/*
 	 * We are going to layout all text sections in .text output section,
 	 * starting with .text. The asterisk("*") in front of the
@@ -96,18 +96,16 @@ SECTIONS
 		*(.text.entry)
 		*(.text .text.*)
 		PROVIDE(_text_end = .);
-	} 
-	/* >ram */
+	} >ram
 
-	rodata_start = .;
+	/* rodata_start = .; */
 	.rodata : {
 		PROVIDE(_rodata_start = .);
 		*(.rodata .rodata.*)
 		PROVIDE(_rodata_end = .);
-	} 
-	/* >ram */
+	} >ram
 
-	data_start = .;
+	/* data_start = .; */
 	.data : {
 		/*
 		 * . = ALIGN(4096) tells the linker to align the current memory
@@ -124,10 +122,9 @@ SECTIONS
 		*(.sdata .sdata.*)
 		*(.data .data.*)
 		PROVIDE(_data_end = .);
-	} 
-	/* >ram */
+	} >ram
 
-	bss_start = .;
+	/* bss_start = .; */
 	.bss :{
 		/*
 		 * https://sourceware.org/binutils/docs/ld/Input-Section-Common.html
@@ -139,11 +136,10 @@ SECTIONS
 		*(.bss .bss.*)
 		*(COMMON)
 		PROVIDE(_bss_end = .);
-	} 
-	/* >ram */
+	} >ram
 
-	PROVIDE(_memory_start = 0x80000000);
-	PROVIDE(_memory_end = 0x80000000 + 128M);
+	PROVIDE(_memory_start = ORIGIN(ram));
+	PROVIDE(_memory_end = ORIGIN(ram) + LENGTH(ram));
 
 	PROVIDE(_heap_start = _bss_end);
 	PROVIDE(_heap_size = _memory_end - _heap_start);

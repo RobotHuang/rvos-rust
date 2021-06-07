@@ -14,13 +14,14 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-mod uart;
 mod page;
+mod uart;
 
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {
     uart::uart_init();
     uart::uart_puts(b"Hello RVOS!\n");
     page::page_init();
+    page::page_test();
     loop {}
 }

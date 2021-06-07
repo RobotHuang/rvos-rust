@@ -118,7 +118,7 @@ pub fn page_init() {
     };
 }
 
-fn page_alloc(npages: i32) -> Option<*const u8>{
+fn page_alloc(npages: i32) -> Option<*const u8> {
     unsafe {
         let mut found = false;
         let mut page_i = HEAP_START as *mut Page;
@@ -126,36 +126,55 @@ fn page_alloc(npages: i32) -> Option<*const u8>{
             if _is_free(page_i) {
                 found = true;
                 let mut page_j = page_i;
-                for j in i..i+npages {
+                for j in i..i + npages {
                     if !_is_free(page_j) {
                         found = false;
                         break;
                     }
-                    page_j = page_j.offset((j- i + 1) as isize);
+                    page_j = page_j.add(1);
                 }
 
                 if found {
                     let mut page_k = page_i;
                     for k in i..i + npages {
                         _set_flag(page_k, PAGE_TAKEN);
-                        page_k = page_k.offset((k-i+1) as isize);
+                        page_k = page_k.add(1);
                     }
-                    page_k = page_k.offset(-1 as isize);
+                    page_k = page_k.sub(1);
                     _set_flag(page_k, PAGE_LAST);
-                    return Some((_alloc_start + i as u32 * PAGE_SIZE) as *const u8)
+                    return Some((_alloc_start + i as u32 * PAGE_SIZE) as *const u8);
                 }
             }
-            page_i = page_i.offset((i+1) as isize);
+            page_i = page_i.add(1);
         }
     }
     None
 }
 
-// fn page_free(p: Option<*const u8>) {}
+fn page_free(p: Option<*const u8>) {
+    if let Some(p_v) = p {
+        unsafe {
+            if p_v as u32 >= _alloc_end {
+                return;
+            }
+            let mut page = HEAP_START as *mut Page;
+            page = page.add(((p_v as u32 - _alloc_start) / PAGE_SIZE) as usize);
+            while !_is_free(page) {
+                if _is_last(page) {
+                    _clear(page);
+                    break;
+                } else {
+                    _clear(page);
+                    page = page.add(1);
+                }
+            }
+        }
+    }
+}
 
 pub fn page_test() {
     let p = page_alloc(2);
-	unsafe {
+    unsafe {
         if let Some(v) = p {
             printf(b"p = 0x%x\n\0" as *const u8, v);
         }
@@ -165,6 +184,15 @@ pub fn page_test() {
     unsafe {
         if let Some(v) = p2 {
             printf(b"p2 = 0x%x\n\0" as *const u8, v);
+        }
+    }
+    page_free(p2);
+    page_free(p);
+
+    let p3 = page_alloc(4);
+    unsafe {
+        if let Some(v) = p3 {
+            printf(b"p3 = 0x%x\n\0" as *const u8, v);
         }
     }
 }

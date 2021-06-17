@@ -1,7 +1,10 @@
 #![allow(unused)]
 #![feature(llvm_asm)]
 
+use crate::config::MAX_TASKS;
 use crate::config::STACK_SIZE;
+use crate::uart::uart_puts;
+use spin::Mutex;
 
 extern "C" {
     fn switch_to(next: *const context);
@@ -48,7 +51,7 @@ pub struct context {
 }
 
 impl context {
-    pub fn new() -> context {
+    pub const fn new() -> context {
         context {
             ra: 0,
             sp: 0,
@@ -85,10 +88,25 @@ impl context {
     }
 }
 
+// lazy_static!{
+//     pub static ref task_stack: Mutex<[[u8; STACK_SIZE]; MAX_TASKS]> = Mutex::new([[0; STACK_SIZE]; MAX_TASKS]);
+//     pub static ref ctx_tasks: Mutex<[context; MAX_TASKS]> = Mutex::new([context::new(); MAX_TASKS]);
+//     pub static ref top: Mutex<usize> = Mutex::new(0);
+// }
+
+// static mut task_stack: Mutex<[[u8; STACK_SIZE]; MAX_TASKS]> = Mutex::new([[0; STACK_SIZE]; MAX_TASKS]);
+// static mut _top: Mutex<usize> = Mutex::new(0);
+// static mut _current: Mutex<isize> = Mutex::new(-1);
+// static mut ctx_tasks: Mutex<[context; MAX_TASKS]> = Mutex::new([context::new(); MAX_TASKS]);
+static mut task_stack: [[u8; STACK_SIZE]; MAX_TASKS] = [[0; STACK_SIZE]; MAX_TASKS];
+static mut _top: usize = 0;
+static mut _current: isize = -1;
+static mut ctx_tasks: [context; MAX_TASKS] = [context::new(); MAX_TASKS];
+
 fn w_mscratch(x: RegT) {
     unsafe {
         llvm_asm!("csrw mscratch, $0"
-            : 
+            :
             : "r" (x)
             :
             : "volatile"
@@ -96,17 +114,27 @@ fn w_mscratch(x: RegT) {
     }
 }
 
-pub fn sched_init(ctx_task: &mut context, task_stack: &mut [u8]) {
+pub fn sched_init() {
     w_mscratch(0);
-
-    ctx_task.sp = task_stack[STACK_SIZE - 1] as RegT;
-    user_task0();
-    ctx_task.sp = user_task0 as fn() as RegT;
 }
 
-pub fn schedule(ctx_task: &context) {
-    let next = ctx_task as *const context;
+pub fn schedule() {
+    // unsafe {
+    //     if *_top.lock() <= 0 {
+    //         return;
+    //     }
+
+    //     *_current.lock() = (*_current.lock() + 1) % (*_top.lock() as isize);
+    //     let next = &(*ctx_tasks.lock())[*_current.lock() as usize] as *const context;
+    //     switch_to(next);
+    // }
     unsafe {
+        if _top <= 0 {
+            return;
+        }
+
+        _current = (_current + 1) % (_top as isize);
+        let next = &ctx_tasks[_current as usize] as *const context;
         switch_to(next);
     }
 }
@@ -118,11 +146,49 @@ fn task_delay(mut count: i32) {
     }
 }
 
+fn task_yield() {
+    schedule();
+}
+
+pub fn task_create(start_routine: fn()) -> i32 {
+    unsafe {
+        if _top < MAX_TASKS {
+            ctx_tasks[_top].sp = (&task_stack[_top][STACK_SIZE - 1]) as *const u8 as RegT;
+            ctx_tasks[_top].ra = start_routine as fn() as RegT;
+            _top += 1;
+            return 0;
+        }
+    }
+    // unsafe {
+    //     if *_top.lock() < MAX_TASKS {
+    //         (*ctx_tasks.lock())[*_top.lock()].sp =  (&(*task_stack.lock())[*_top.lock()][STACK_SIZE - 1]) as *const u8 as RegT;
+    //         (*ctx_tasks.lock())[*_top.lock()].ra = start_routine as fn() as RegT;
+    //         *_top.lock() += 1;
+    //         return 0;
+    //     }
+    // }
+    return -1;
+}
+
 fn user_task0() {
-    use crate::uart::uart_puts;
     uart_puts(b"Task 0: Created!\n");
     loop {
         uart_puts(b"Task 0: Running...\n");
-        task_delay(100000000);
+        task_delay(10000);
+        task_yield();
     }
+}
+
+fn user_task1() {
+    uart_puts(b"Task 1: Created!\n");
+    loop {
+        uart_puts(b"Task 1: Running...\n");
+        task_delay(10000);
+        task_yield();
+    }
+}
+
+pub fn os_main() {
+    task_create(user_task0);
+    task_create(user_task1);
 }

@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(global_asm)]
+#![feature(llvm_asm)]
 
 use core::panic::PanicInfo;
 
@@ -15,13 +16,19 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 mod page;
+mod sched;
 mod uart;
+mod config;
 
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {
+    use config::STACK_SIZE;
     uart::uart_init();
     uart::uart_puts(b"Hello RVOS!\n");
     page::page_init();
     page::page_test();
+    let mut ctx_task = sched::context::new();
+    let mut task_stack: [u8; STACK_SIZE] = [0; STACK_SIZE];
+    sched::sched_init(&mut ctx_task, &mut task_stack);
     loop {}
 }

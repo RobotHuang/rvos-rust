@@ -99,8 +99,7 @@ fn w_mscratch(x: RegT) {
 pub fn sched_init(ctx_task: &mut context, task_stack: &mut [u8]) {
     w_mscratch(0);
 
-    ctx_task.sp = task_stack[STACK_SIZE - 1] as RegT;
-    user_task0();
+    ctx_task.sp = &task_stack[STACK_SIZE - 1] as *const u8 as RegT;
     ctx_task.sp = user_task0 as fn() as RegT;
 }
 

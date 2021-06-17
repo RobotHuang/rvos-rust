@@ -2,6 +2,7 @@
 # struct context *base = &ctx_task;
 # base->ra = ra;
 # ......
+.option norelax
 .macro reg_save base
 	sw ra, 0(\base)
 	sw sp, 4(\base)

@@ -17,8 +17,10 @@ fn panic(_info: &PanicInfo) -> ! {
 
 mod config;
 mod page;
+mod riscv;
 mod sched;
 mod uart;
+mod trap;
 
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {
@@ -26,6 +28,7 @@ pub extern "C" fn start_kernel() -> ! {
     uart::uart_puts(b"Hello RVOS!\n");
     page::page_init();
     page::page_test();
+    trap::trap_init();
     sched::sched_init();
     sched::os_main();
     sched::schedule();

@@ -1,16 +1,15 @@
 #![allow(unused)]
-#![feature(llvm_asm)]
 
+use crate::config::RegT;
 use crate::config::MAX_TASKS;
 use crate::config::STACK_SIZE;
+use crate::riscv::*;
 use crate::uart::uart_puts;
 use spin::Mutex;
 
 extern "C" {
     fn switch_to(next: *const context);
 }
-
-type RegT = u32;
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
@@ -103,17 +102,6 @@ static mut _top: usize = 0;
 static mut _current: isize = -1;
 static mut ctx_tasks: [context; MAX_TASKS] = [context::new(); MAX_TASKS];
 
-fn w_mscratch(x: RegT) {
-    unsafe {
-        llvm_asm!("csrw mscratch, $0"
-            :
-            : "r" (x)
-            :
-            : "volatile"
-        );
-    }
-}
-
 pub fn sched_init() {
     w_mscratch(0);
 }
@@ -174,6 +162,9 @@ fn user_task0() {
     uart_puts(b"Task 0: Created!\n");
     loop {
         uart_puts(b"Task 0: Running...\n");
+        use crate::trap::trap_test;
+        trap_test();
+        
         task_delay(10000);
         task_yield();
     }

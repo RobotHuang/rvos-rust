@@ -67,6 +67,12 @@ pub fn uart_init() {
      */
     lcr = 0;
     uart_write_reg(LCR, lcr | (3 << 0));
+
+    /*
+     * enable receive interrupts.
+     */
+    let ier = uart_read_reg(IER);
+    uart_write_reg(IER, ier | (1 << 0));
 }
 
 pub extern "C" fn uart_putc(ch: u8) {
@@ -77,5 +83,25 @@ pub extern "C" fn uart_putc(ch: u8) {
 pub fn uart_puts(s: &[u8]) {
     for c in s {
         uart_putc(*c);
+    }
+}
+
+pub fn uart_getc() -> i32 {
+    if uart_read_reg(LSR) & LSR_RX_READY > 0 {
+        return uart_read_reg(RHR) as i32;
+    } else {
+        return -1;
+    }
+}
+
+pub fn uart_isr() {
+    loop {
+        let c = uart_getc();
+        if c == -1 {
+            break;
+        } else {
+            uart_putc(c as u8);
+            uart_putc(b'\n');
+        }
     }
 }

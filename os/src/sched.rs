@@ -128,7 +128,7 @@ pub fn schedule() {
 }
 
 fn task_delay(mut count: i32) {
-    count = count * 5000;
+    count = count * 50000;
     while count > 0 {
         count -= 1;
     }
@@ -162,10 +162,9 @@ fn user_task0() {
     uart_puts(b"Task 0: Created!\n");
     loop {
         uart_puts(b"Task 0: Running...\n");
-        use crate::trap::trap_test;
-        trap_test();
-        
-        task_delay(10000);
+        // use crate::trap::trap_test;
+        // trap_test();
+        task_delay(1000);
         task_yield();
     }
 }
@@ -174,7 +173,7 @@ fn user_task1() {
     uart_puts(b"Task 1: Created!\n");
     loop {
         uart_puts(b"Task 1: Running...\n");
-        task_delay(10000);
+        task_delay(1000);
         task_yield();
     }
 }

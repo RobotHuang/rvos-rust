@@ -74,3 +74,12 @@ pub fn r_mstatus() -> RegT {
     }
     x
 }
+
+#[inline(always)]
+pub fn r_mhartid() -> RegT {
+    let x: RegT;
+    unsafe {
+        llvm_asm!("csrr $0, mhartid": "=r" (x));
+    }
+    x
+}

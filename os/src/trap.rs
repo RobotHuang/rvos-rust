@@ -2,6 +2,7 @@ use crate::config::*;
 use crate::plic::*;
 use crate::riscv::*;
 use crate::uart::*;
+use crate::timer::*;
 
 extern "C" {
     fn trap_vector();
@@ -41,6 +42,7 @@ pub extern "C" fn trap_handler(epc: RegT, cause: RegT) -> RegT {
             }
             7 => {
                 uart_puts(b"timer interruption!\n");
+                timer_handler();
             }
             11 => {
                 uart_puts(b"external interruption!\n");

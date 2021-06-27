@@ -22,6 +22,7 @@ mod riscv;
 mod sched;
 mod trap;
 mod uart;
+mod timer;
 
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {
@@ -31,6 +32,7 @@ pub extern "C" fn start_kernel() -> ! {
     page::page_test();
     trap::trap_init();
     plic::plic_init();
+    timer::timer_init();
     sched::sched_init();
     sched::os_main();
     sched::schedule();

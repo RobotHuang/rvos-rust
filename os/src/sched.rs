@@ -142,9 +142,9 @@ fn task_delay(mut count: i32) {
 }
 
 fn task_yield() {
-    // let id = r_mhartid(); // This line will cause illegal instruction. I have no idea about this.
+    let id = r_mhartid(); // This line will cause illegal instruction. I have no idea about this.
     unsafe {
-        *(clint_msip(0 as usize) as *mut u32) = 1;
+        *(clint_msip(id as usize) as *mut u32) = 1;
     }
 }
 

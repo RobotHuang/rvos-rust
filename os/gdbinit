@@ -3,6 +3,6 @@ display/z $mscratch
 display/z $mepc
 display/z $sp
 display/z $mhartid
-b task_yield
+b spin_lock
 target remote : 1234
 c

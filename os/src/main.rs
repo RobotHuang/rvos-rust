@@ -24,6 +24,8 @@ mod trap;
 mod uart;
 mod timer;
 mod platform;
+mod lock;
+mod user;
 
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {
@@ -35,7 +37,7 @@ pub extern "C" fn start_kernel() -> ! {
     plic::plic_init();
     timer::timer_init();
     sched::sched_init();
-    sched::os_main();
+    user::os_main();
     sched::schedule();
     loop {}
 }

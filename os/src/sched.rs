@@ -7,6 +7,7 @@ use crate::riscv::*;
 use crate::uart::uart_puts;
 use crate::platform::*;
 use spin::Mutex;
+use crate::lock::*;
 
 extern "C" {
     fn switch_to(next: *const context);
@@ -134,17 +135,17 @@ pub fn schedule() {
     }
 }
 
-fn task_delay(mut count: i32) {
+pub fn task_delay(mut count: i32) {
     count = count * 50000;
     while count > 0 {
         count -= 1;
     }
 }
 
-fn task_yield() {
-    // let id = r_mhartid(); // This line will cause illegal instruction. I have no idea about this.
+pub fn task_yield() {
+    let id = r_mhartid(); // This line will cause illegal instruction. I have no idea about this.
     unsafe {
-        *(clint_msip(0 as usize) as *mut u32) = 1;
+        *(clint_msip(id as usize) as *mut u32) = 1;
     }
 }
 
@@ -166,29 +167,4 @@ pub fn task_create(start_routine: fn()) -> i32 {
     //     }
     // }
     return -1;
-}
-
-fn user_task0() {
-    uart_puts(b"Task 0: Created!\n");
-    task_yield();
-    uart_puts(b"Task 0: I'm back!\n");
-    loop {
-        uart_puts(b"Task 0: Running...\n");
-        task_delay(1000);
-    }
-}
-
-fn user_task1() {
-    uart_puts(b"Task 1: Created!\n");
-    loop {
-        uart_puts(b"Task 1: Running...\n");
-        task_delay(1000);
-    }
-}
-
-pub fn os_main() {
-    uart_puts(b"os_main...\n");
-    task_create(user_task0);
-    task_create(user_task1);
-    uart_puts(b"os_main finished...\n");
 }

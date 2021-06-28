@@ -5,10 +5,12 @@ use crate::config::MAX_TASKS;
 use crate::config::STACK_SIZE;
 use crate::riscv::*;
 use crate::uart::uart_puts;
+use crate::platform::*;
 use spin::Mutex;
 
 extern "C" {
     fn switch_to(next: *const context);
+    fn printf(s: *const u8, ...);
 }
 
 #[repr(C)]
@@ -47,6 +49,7 @@ pub struct context {
     t4: RegT,
     t5: RegT,
     t6: RegT,
+    pc: RegT,
 }
 
 impl context {
@@ -83,6 +86,7 @@ impl context {
             t4: 0,
             t5: 0,
             t6: 0,
+            pc: 0,
         }
     }
 }
@@ -104,6 +108,9 @@ static mut ctx_tasks: [context; MAX_TASKS] = [context::new(); MAX_TASKS];
 
 pub fn sched_init() {
     w_mscratch(0);
+
+    /* enable machine-mode software interrupts. */
+	w_mie(r_mie() | (1 << 3));
 }
 
 pub fn schedule() {
@@ -135,14 +142,17 @@ fn task_delay(mut count: i32) {
 }
 
 fn task_yield() {
-    schedule();
+    // let id = r_mhartid(); // This line will cause illegal instruction. I have no idea about this.
+    unsafe {
+        *(clint_msip(0 as usize) as *mut u32) = 1;
+    }
 }
 
 pub fn task_create(start_routine: fn()) -> i32 {
     unsafe {
         if _top < MAX_TASKS {
             ctx_tasks[_top].sp = (&task_stack[_top][STACK_SIZE - 1]) as *const u8 as RegT;
-            ctx_tasks[_top].ra = start_routine as fn() as RegT;
+            ctx_tasks[_top].pc = start_routine as fn() as RegT;
             _top += 1;
             return 0;
         }
@@ -160,12 +170,11 @@ pub fn task_create(start_routine: fn()) -> i32 {
 
 fn user_task0() {
     uart_puts(b"Task 0: Created!\n");
+    task_yield();
+    uart_puts(b"Task 0: I'm back!\n");
     loop {
         uart_puts(b"Task 0: Running...\n");
-        // use crate::trap::trap_test;
-        // trap_test();
         task_delay(1000);
-        task_yield();
     }
 }
 
@@ -174,11 +183,12 @@ fn user_task1() {
     loop {
         uart_puts(b"Task 1: Running...\n");
         task_delay(1000);
-        task_yield();
     }
 }
 
 pub fn os_main() {
+    uart_puts(b"os_main...\n");
     task_create(user_task0);
     task_create(user_task1);
+    uart_puts(b"os_main finished...\n");
 }

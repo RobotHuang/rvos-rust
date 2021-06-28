@@ -92,6 +92,10 @@ trap_vector:
 	reg_save t6
 	csrw	mscratch, t6
 
+	# save mepc to context of current task
+	csrr	a0, mepc
+	sw	a0, 124(t6)
+
 	# call the C trap handler in trap.c
 	csrr	a0, mepc
 	csrr	a1, mcause
@@ -112,13 +116,26 @@ trap_vector:
 .globl switch_to
 .align 4
 switch_to:
-	csrrw	t6, mscratch, t6	# swap t6 and mscratch
-	beqz	t6, 1f			# Notice: previous task may be NULL
-	reg_save t6			# save context of prev task
+# 	csrrw	t6, mscratch, t6	# swap t6 and mscratch
+# 	beqz	t6, 1f			# Notice: previous task may be NULL
+# 	reg_save t6			# save context of prev task
 
-1:
+# 1:
+# 	# switch mscratch to point to the context of the next task
+# 	csrw	mscratch, a0
+
+# 	# Restore all GP registers
+# 	# Use t6 to point to the context of the new task
+# 	mv	t6, a0
+# 	reg_restore t6
+	
+# 	# Do actual context switching.
+# 	ret
 	# switch mscratch to point to the context of the next task
 	csrw	mscratch, a0
+	# set mepc to the pc of the next task
+	lw	a1, 124(a0)
+	csrw	mepc, a1
 
 	# Restore all GP registers
 	# Use t6 to point to the context of the new task
@@ -126,7 +143,8 @@ switch_to:
 	reg_restore t6
 	
 	# Do actual context switching.
-	ret
+	# Notice this will enable global interrupt
+	mret
 
 .end
 

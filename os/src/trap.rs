@@ -3,6 +3,8 @@ use crate::plic::*;
 use crate::riscv::*;
 use crate::uart::*;
 use crate::timer::*;
+use crate::platform::*;
+use crate::sched::*;
 
 extern "C" {
     fn trap_vector();
@@ -39,6 +41,11 @@ pub extern "C" fn trap_handler(epc: RegT, cause: RegT) -> RegT {
         match cause_code {
             3 => {
                 uart_puts(b"software interruption!\n");
+                let id = r_mhartid();
+                unsafe {
+                    *(clint_msip(id as usize) as *mut u32) = 0;
+                }
+                schedule();
             }
             7 => {
                 uart_puts(b"timer interruption!\n");

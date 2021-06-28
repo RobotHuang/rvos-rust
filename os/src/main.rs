@@ -23,6 +23,7 @@ mod sched;
 mod trap;
 mod uart;
 mod timer;
+mod platform;
 
 #[no_mangle]
 pub extern "C" fn start_kernel() -> ! {

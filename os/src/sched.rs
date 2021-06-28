@@ -142,6 +142,7 @@ pub fn task_delay(mut count: i32) {
     }
 }
 
+
 pub fn task_yield() {
     let id = r_mhartid(); // This line will cause illegal instruction. I have no idea about this.
     unsafe {

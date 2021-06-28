@@ -29,6 +29,16 @@ _start:
 					# to the end of the stack space
 	add	sp, sp, t0		# move the current hart stack pointer
 					# to its place in the stack space
+	
+	# At the end of start_kernel, schedule() will call MRET to switch
+	# to the first task, so we parepare the mstatus here.
+	# Notice: default mstatus is 0
+	# Set mstatus.MPP to 3, so we still run in Machine mode after MRET.
+	# Set mstatus.MPIE to 1, so MRET will enable the interrupt.
+	li	t0, 3 << 11 | 1 << 7
+	csrr	a1, mstatus
+	or	t0, t0, a1
+	csrw	mstatus, t0
 
 	# At the end of start_kernel, schedule() will call MRET to switch
 	# to the first task, so we parepare the mstatus here.
